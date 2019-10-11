@@ -1,87 +1,66 @@
 ﻿#include <iostream>
+#include <fstream>
 #include <modbus.h>
 #include <thread>
 #include <chrono>
 #include "IniParser.h"
+#include "LogData.h"
 
-void logging_thread(modbus_t *ctx, int input_address)
+void logging_thread(modbus_t *ctx, short sweep_time)
 {
-	uint16_t response[1];
-
 	while (true) {
-		modbus_read_registers(ctx, input_address, 1, response);
-		//modbus_read_input_bits(ctx, input_address, 1, response);
-		std::cout << "Input address: " << input_address << " Value: " << response[0] << std::endl;
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		auto start = std::chrono::system_clock::now();
+		
+		LogData logdata("logdata.cfg");
+		logdata.optimize();
+		logdata.log();
+
+		auto end = std::chrono::system_clock::now();
+		long elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+		
+		std::cout << elapsed_time << std::endl;
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(sweep_time));
 	}
 }
 
 int main()
 {
 	modbus_t* ctx = nullptr;
-	//IniParser config("config.ini");
-	//config.get("dsa");
+	IniParser config("config.ini");
 
-	char connection_type;
+	const char *connection_type = config.getChar("connection_type");
 
-	char device[64];
+	const char *device;
 	int baud;
 	char parity;
 	short data_bit;
 	short stop_bit;
 	short slave;
 
-	char ip_address[64];
+	const char *ip_address;
 	short port;
 
-	std::cout << "Connection type"
-		<< std::endl << "  S - serial"
-		<< std::endl << "  T - TCP/IP"
-		<< std::endl << "> ";
-	std::cin >> connection_type;
+	short sweep_time = 100;
 
-	switch (connection_type) {
-		case 'S':
-		{
-			std::cout << "Device: ";
-			std::cin >> device;
-			std::cout << "Baud: ";
-			std::cin >> baud;
-			std::cout << "Parity"
-				<< std::endl << "  N - none"
-				<< std::endl << "  O - odd"
-				<< std::endl << "  E - even"
-				<< std::endl << "> ";
-			std::cin >> parity;
-			std::cout << "Data bit: ";
-			std::cin >> data_bit;
-			std::cout << "Stop bit: ";
-			std::cin >> stop_bit;
-			std::cout << "Slave: ";
-			std::cin >> slave;
-			break;
-		}
-		case 'T':
-		{
-			std::cout << "IP Address: ";
-			std::cin >> ip_address;
-			std::cout << "Port: ";
-			std::cin >> port;
-			break;
-		}
-		default: 
-			return -1;
-	}
-
-	if (connection_type == 'S')
+	if (!strcmp(connection_type, "serial"))
 	{
+		device = config.getChar("device");
+		baud = config.getInt("baud");
+		parity = config.getChar("parity")[0];
+		data_bit = config.getInt("data_bit");
+		stop_bit = config.getInt("stop_bit");
+		slave = config.getInt("slave");
+
 		ctx = modbus_new_rtu(device, baud, parity, data_bit, stop_bit);
 		modbus_set_slave(ctx, slave);
 	}
-	else if(connection_type == 'T')
+	else if (!strcmp(connection_type, "tcpip"))
+	{
+		ip_address = config.getChar("ip_address");
+		port = config.getInt("port");
 		ctx = modbus_new_tcp(ip_address, port);
-
-
+	}
 
 	if (modbus_connect(ctx) == -1)
 	{
@@ -90,15 +69,9 @@ int main()
 		return -1;
 	}
 
-	std::cout << "Connected" << std::endl;
+	sweep_time = config.getInt("sweep_time");
 
-	int input_address;
-
-	std::cout << "Input address: ";
-	std::cin >> input_address;
-
-	std::thread logger(logging_thread, ctx, input_address);
-
+	std::thread logger(logging_thread, ctx, sweep_time);
 	logger.detach();
 
 	while (true);

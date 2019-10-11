@@ -1,0 +1,30 @@
+# depslib dependency file v1.0
+1570658581 source:c:\users\michu\source\repos\simplemodbuslogger\simplemodbuslogger\simplemodbuslogger.cpp
+	<modbus.h>
+	<thread>
+	<chrono>
+	"IniParser.h"
+
+1564611458 c:\users\michu\source\repos\simplemodbuslogger\simplemodbuslogger\include\\modbus.h
+	<sys/param.h>
+	<stdint.h>
+	"stdint.h"
+	"modbus-version.h"
+	"modbus-tcp.h"
+	"modbus-rtu.h"
+
+1570357010 c:\users\michu\source\repos\simplemodbuslogger\simplemodbuslogger\include\\modbus-version.h
+
+1564611458 c:\users\michu\source\repos\simplemodbuslogger\simplemodbuslogger\include\\modbus-tcp.h
+	"modbus.h"
+	<winsock2.h>
+
+1564611458 c:\users\michu\source\repos\simplemodbuslogger\simplemodbuslogger\include\\modbus-rtu.h
+	"modbus.h"
+
+1570726980 c:\users\michu\source\repos\simplemodbuslogger\simplemodbuslogger\iniparser.h
+	<iostream>
+	<fstream>
+	<string.h>
+	<string>
+
