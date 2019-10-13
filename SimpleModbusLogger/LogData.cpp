@@ -98,13 +98,20 @@ void LogData::log()
 		int item_index = 0;
 		int start = item[0].getAddress();
 		int count = 1;
+		bool split = false;
 
 		for (int j = 1; j < items_length; j++)
 		{
 			if (item[j].getAddress() - item[j - 1].getAddress() == 1)
 				count++;
-			
-			if (item[j].getAddress() - item[j - 1].getAddress() != 1 || j == items_length - 1)
+
+			if (count > 100)
+			{
+				split = true;
+				count--;
+			}
+
+			if (item[j].getAddress() - item[j - 1].getAddress() != 1 || j == items_length - 1 || split)
 			{
 				if (!strcmp(item[0].getType(), "Q"))
 					fetchOutput(start, count, item, item_index);
@@ -114,13 +121,20 @@ void LogData::log()
 					fetchRegisters(start, count, item, item_index);
 				else if (!strcmp(item[0].getType(), "AI"))
 					fetchAnalogInput(start, count, item, item_index);
+				
+				std::cout << "i: " << item_index << " c: " << count << " s: " << start << " " << start << "-" << start + count - 1 << std::endl;
+
+				start = item[item_index + count].getAddress();
+				item_index += count;
 
 				count = 1;
-				start = item[j].getAddress();
-				item_index = j;
+
+				split = false;
 			}
 		}
 	}
+
+
 }
 
 void LogData::fetchOutput(short start, short count, vector<LogItem>& items, int item_index)
