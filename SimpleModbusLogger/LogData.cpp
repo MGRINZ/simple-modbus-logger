@@ -1,8 +1,9 @@
 #include "LogData.h"
 
-LogData::LogData(string path)
+LogData::LogData(string path, modbus_t* modbus_ctx)
 {
 	this->path = path;
+	this->modbus_ctx = modbus_ctx;
 }
 
 short LogData::minimum(vector<LogItem> &items, int start, int end)
@@ -91,38 +92,77 @@ void LogData::log()
 		vector<LogItem>& item = *items[i];
 		int items_length = item.size();
 
+		if (!items_length)
+			continue;
+
+		int item_index = 0;
 		int start = item[0].getAddress();
 		int count = 1;
-
 
 		for (int j = 1; j < items_length; j++)
 		{
 			if (item[j].getAddress() - item[j - 1].getAddress() == 1)
 				count++;
-			else
+			
+			if (item[j].getAddress() - item[j - 1].getAddress() != 1 || j == items_length - 1)
 			{
-				//std::cout << item[0].getType() << std::endl;
+				if (!strcmp(item[0].getType(), "Q"))
+					fetchOutput(start, count, item, item_index);
+				else if (!strcmp(item[0].getType(), "I"))
+					fetchInput(start, count, item, item_index);
+				else if (!strcmp(item[0].getType(), "R"))
+					fetchRegisters(start, count, item, item_index);
+				else if (!strcmp(item[0].getType(), "AI"))
+					fetchAnalogInput(start, count, item, item_index);
+
 				count = 1;
 				start = item[j].getAddress();
+				item_index = j;
 			}
 		}
-
 	}
 }
 
-void LogData::logOutput()
+void LogData::fetchOutput(short start, short count, vector<LogItem>& items, int item_index)
 {
+	uint8_t* dest = new uint8_t[count];
+	modbus_read_bits(modbus_ctx, start, count, dest);
+
+	for (int i = 0; i < count; i++)
+		items[item_index + i].setValue(dest[i]);
+
+	delete[] dest;
 }
 
-void LogData::logInput()
+void LogData::fetchInput(short start, short count, vector<LogItem>& items, int item_index)
 {
+	uint8_t* dest = new uint8_t[count];
+	modbus_read_input_bits(modbus_ctx, start, count, dest);
+
+	for (int i = 0; i < count; i++)
+		items[item_index + i].setValue(dest[i]);
+
+	delete[] dest;
 }
 
-void LogData::logRegisters()
+void LogData::fetchRegisters(short start, short count, vector<LogItem> &items, int item_index)
 {
-	
+	uint16_t *dest = new uint16_t[count];
+	modbus_read_registers(modbus_ctx, start, count, dest);
+
+	for (int i = 0; i < count; i++)
+		items[item_index + i].setValue(dest[i]);
+
+	delete[] dest;
 }
 
-void LogData::logAnalogInput()
+void LogData::fetchAnalogInput(short start, short count, vector<LogItem>& items, int item_index)
 {
+	uint16_t* dest = new uint16_t[count];
+	modbus_read_input_registers(modbus_ctx, start, count, dest);
+
+	for (int i = 0; i < count; i++)
+		items[item_index + i].setValue(dest[i]);
+
+	delete[] dest;
 }

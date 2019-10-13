@@ -11,14 +11,14 @@ void logging_thread(modbus_t *ctx, short sweep_time)
 	while (true) {
 		auto start = std::chrono::system_clock::now();
 		
-		LogData logdata("logdata.cfg");
+		LogData logdata("logdata.cfg", ctx);
 		logdata.optimize();
 		logdata.log();
 
 		auto end = std::chrono::system_clock::now();
 		long elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 		
-		std::cout << elapsed_time << std::endl;
+		std::cout << "T: " << elapsed_time << std::endl;
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(sweep_time));
 	}

@@ -26,3 +26,13 @@ string LogItem::getLabel()
 {
 	return label;
 }
+
+void LogItem::setValue(short value)
+{
+	this->value = value;
+}
+
+short LogItem::getValue()
+{
+	return value;
+}
