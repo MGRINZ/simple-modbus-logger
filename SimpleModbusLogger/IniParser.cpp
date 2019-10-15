@@ -3,6 +3,7 @@
 IniParser::IniParser(string path)
 {
 	this->path = path;
+	//sprawdŸ czy istnieje jak nie to utwórz i wype³nij wartoœciami domyœlnymi
 }
 
 string IniParser::get(string key)

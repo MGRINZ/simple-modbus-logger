@@ -10,15 +10,19 @@
 void logging_thread(LogData *logdata , short sweep_time)
 {
 	while (true) {
+		//Pobierz czas rozpoczęcia cyklu
 		auto start = std::chrono::system_clock::now();
 		
+		//Pobierz dane i zapisz do bazy danych
 		logdata->log();
 
+		//Pobierz czas zakończenia cyklu i wyznacz czas trwania cyklu
 		auto end = std::chrono::system_clock::now();
 		long elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 		
 		std::cout << "T: " << elapsed_time << std::endl;
 
+		//Opóźnij rozpoczęcie kolejnego cyklu
 		std::this_thread::sleep_for(std::chrono::milliseconds(sweep_time - elapsed_time));
 	}
 }
@@ -26,12 +30,16 @@ void logging_thread(LogData *logdata , short sweep_time)
 int main()
 {
 	modbus_t* ctx = nullptr;
-	IniParser config("config.ini");
 	mysqlx::Session* db = nullptr;
 	LogData* logdata = nullptr;
+	
+	//Wczytanie pliku konfiguracji
+	IniParser config("config.ini");
 
+	//Ustawienie typu połączenia (<serial, tcpip>)
 	const char *connection_type = config.getChar("connection_type");
 
+	//Ustawienia połączenia szeregowego
 	const char *device;
 	int baud;
 	char parity;
@@ -39,19 +47,24 @@ int main()
 	short stop_bit;
 	short slave;
 
+	//Ustawienia połączenia TCP/IP
 	const char *ip_address;
 	short port;
 
+	//Wczytanie ustawień serwera MySQL
 	string db_host = config.get("db_host");
 	string db_port = config.get("db_port");
 	string db_user = config.get("db_user");
 	string db_password = config.get("db_password");
 	string db_database = config.get("db_database");
 
+	//Domyślny czas trwania cyklu programu
 	short sweep_time = 100;
 
+	//Wczytanie ustawień połączenia MODBUS
 	if (!strcmp(connection_type, "serial"))
 	{
+		//Wczytanie ustawień dla połączenia MODBUS RTU
 		device = config.getChar("device");
 		baud = config.getInt("baud");
 		parity = config.getChar("parity")[0];
@@ -64,11 +77,13 @@ int main()
 	}
 	else if (!strcmp(connection_type, "tcpip"))
 	{
+		//Wczytanie ustawień dla połączenia MODBUS TCP/IP
 		ip_address = config.getChar("ip_address");
 		port = config.getInt("port");
 		ctx = modbus_new_tcp(ip_address, port);
 	}
 
+	//Nawiązanie połączenia MODBUS i sprawdzenie poprawności
 	if (modbus_connect(ctx) == -1)
 	{
 		std::cout << "MODBUS connection error: " << modbus_strerror(errno);
@@ -76,14 +91,17 @@ int main()
 		return -1;
 	}
 
-	sweep_time = config.getInt("sweep_time");
-
 	try
 	{
-		//uri = "mysqlx://db_user:db_password@db_host:db_port/db_database"
+		//Nawiązanie połączenia z bazą danych MySQL
+		//uri = "mysqlx://<db_user>:<db_password>@<db_host>:<db_port>/<db_database>"
 		string uri = "mysqlx://" + db_user + ":" + db_password + "@" + db_host + ":" + db_port + "/" + db_database;
 		db = new mysqlx::Session(uri);
-		mysqlx::Schema schema = db->createSchema("web_scada", true);
+
+		//Utworzenie bazy danych, jeśli nie istnieje
+		mysqlx::Schema schema = db->createSchema(db_database, true);
+
+		//Utworzenie tabel jeśli nie istnieją
 		mysqlx::SqlStatement stmt = db->sql(
 			"CREATE TABLE IF NOT EXISTS data("
 			"	id int AUTO_INCREMENT,"
@@ -99,21 +117,39 @@ int main()
 	}
 	catch(std::exception e)
 	{
+		//Obsługa błędów połączenia
 		std::cout << "MySQL connection error" << std::endl;
 		std::cout << e.what() << std::endl;
 		return -1; 
 	}
 
+	//Wczytanie czasu cyklu programu
+	sweep_time = config.getInt("sweep_time");
+
+	//Przygotowanie listy zmiennych do odczytu
 	logdata = new LogData("logdata.cfg", ctx, db);
 	logdata->optimize();
 
+	//Utworzenie wątku dziennika
 	std::thread logger(logging_thread, logdata, sweep_time);
 	logger.detach();
 
 	string command;
 
-	while (true);
+	//Pętla głównego wątku, obsługa CLI
+	while (true)
+	{
+		/*std::cout << "> ";
+		std::cin >> command;
+		if (command == "stop")
+		{
+			std::cout << "Stopping...";
+			break;
+		}*/
+	}
 
+	//Zwolnienie zasobów
+	modbus_free(ctx);
 	delete ctx;
 	delete db;
 	delete logdata;
