@@ -1,9 +1,31 @@
 #include "LogData.h"
 
-LogData::LogData(string path, modbus_t* modbus_ctx)
+void LogData::save(vector<LogItem>& items)
+{
+	for (auto item : items)
+	{
+		try {
+			mysqlx::SqlStatement stmt = db->sql(
+				"INSERT INTO data(type, address, value, label) VALUES (?, ?, ?, ?)"
+			);
+			stmt.bind(item.getType());
+			stmt.bind(item.getAddress());
+			stmt.bind(item.getValue());
+			stmt.bind(item.getLabel());
+			stmt.execute();
+		}
+		catch (std::exception e)
+		{
+			std::cout << e.what() << std::endl;
+		}
+	}
+}
+
+LogData::LogData(string path, modbus_t *modbus_ctx, mysqlx::Session *db)
 {
 	this->path = path;
 	this->modbus_ctx = modbus_ctx;
+	this->db = db;
 }
 
 short LogData::minimum(vector<LogItem> &items, int start, int end)
@@ -132,9 +154,9 @@ void LogData::log()
 				split = false;
 			}
 		}
+
+		save(item);
 	}
-
-
 }
 
 void LogData::fetchOutput(short start, short count, vector<LogItem>& items, int item_index)
