@@ -6,15 +6,32 @@
 #include <mysqlx/xdevapi.h>
 #include "IniParser.h"
 #include "LogData.h"
+#include "LoggerSettings.h"
 
-void logging_thread(LogData *logdata , short sweep_time)
+void logging_thread(LoggerSettings *settings)
 {
 	while (true) {
+		if (settings->isStopSignalSent())
+		{
+			settings->setStopped(true);
+			break;
+		}
+
+		if (settings->isPauseSignalSent())
+			settings->setPaused(true);
+
+		if (settings->isPaused())
+		{
+			if (settings->isResumeSignalSent())
+				settings->setPaused(false);
+			continue;
+		}
+
 		//Pobierz czas rozpoczęcia cyklu
 		auto start = std::chrono::system_clock::now();
 		
 		//Pobierz dane i zapisz do bazy danych
-		logdata->log();
+		settings->getLogData()->log();
 
 		//Pobierz czas zakończenia cyklu i wyznacz czas trwania cyklu
 		auto end = std::chrono::system_clock::now();
@@ -23,7 +40,7 @@ void logging_thread(LogData *logdata , short sweep_time)
 		std::cout << "T: " << elapsed_time << std::endl;
 
 		//Opóźnij rozpoczęcie kolejnego cyklu
-		std::this_thread::sleep_for(std::chrono::milliseconds(sweep_time - elapsed_time));
+		std::this_thread::sleep_for(std::chrono::milliseconds(settings->getSweepTime() - elapsed_time));
 	}
 }
 
@@ -129,9 +146,14 @@ int main()
 	//Przygotowanie listy zmiennych do odczytu
 	logdata = new LogData("logdata.cfg", ctx, db);
 	logdata->optimize();
+	
+	//Utworzenie obiektu do komunikacji z wątkiem dziennika
+	LoggerSettings* loggerSettings = new LoggerSettings();
+	loggerSettings->setLogData(logdata);
+	loggerSettings->setSweepTime(sweep_time);
 
 	//Utworzenie wątku dziennika
-	std::thread logger(logging_thread, logdata, sweep_time);
+	std::thread logger(logging_thread, loggerSettings);
 	logger.detach();
 
 	string command;
@@ -139,18 +161,79 @@ int main()
 	//Pętla głównego wątku, obsługa CLI
 	while (true)
 	{
-		/*std::cout << "> ";
+		std::cout << "> ";
 		std::cin >> command;
+
+		// Zakończenie pracy programu
 		if (command == "stop")
 		{
 			std::cout << "Stopping...";
+			loggerSettings->stop();
+
+			//Oczekiwanie na zakończenie ostatniego cyklu
+			while (!loggerSettings->isStopped());
+			
+			//Przerwanie pętli głównego wątku
 			break;
-		}*/
+		}
+		
+		//Wstrzymanie pracy programu
+		if (command == "pause")
+		{
+			if (loggerSettings->isPaused())
+			{
+				std::cout << "Error: Logger is already paused." << std::endl;
+				continue;
+			}
+
+			std::cout << "Pausing..." << std::endl;
+
+			loggerSettings->pause();
+
+			std::cout << "Paused" << std::endl;
+
+			continue;
+		}
+
+		//Wznowienie pracy programu
+		if (command == "resume")
+		{
+			if (!loggerSettings->isPaused())
+			{
+				std::cout << "Error: Logger is already resumed." << std::endl;
+				continue;
+			}
+
+			std::cout << "Resuming..." << std::endl;
+
+			loggerSettings->resume();
+
+			std::cout << "Resumed" << std::endl;
+
+			continue;
+		}
+
+		//Przeładowanie listy zmiennych do odczytu
+		if (command == "reload")
+		{
+			std::cout << "Pausing..." << std::endl;
+			loggerSettings->pause();
+			std::cout << "Paused" << std::endl;
+
+			std::cout << "Reloading..." << std::endl;
+			logdata->optimize();
+			std::cout << "Reloaded..." << std::endl;
+
+			std::cout << "Resuming..." << std::endl;
+			loggerSettings->resume();
+			std::cout << "Resumed" << std::endl;
+
+			continue;
+		}
 	}
 
 	//Zwolnienie zasobów
 	modbus_free(ctx);
-	delete ctx;
 	delete db;
 	delete logdata;
 

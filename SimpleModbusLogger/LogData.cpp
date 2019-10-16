@@ -58,18 +58,27 @@ void LogData::optimize()
 	std::ifstream data_file(path);
 	string item_str;
 
-	char type[2];
+	char type[3];
 	short address = 0;
 	string label;
 
 	int semicolon = 0;
 
+	inputs.clear();
+	outputs.clear();
+	registers.clear();
+	analogInputs.clear();
+
 	while (std::getline(data_file, item_str))
 	{
+		std::cout << "F: " << item_str << std::endl;
 		type[0] = item_str[1];
 		
 		if (!isdigit(item_str[2]))
+		{
 			type[1] = item_str[2];
+			type[2] = '\0';
+		}
 		else
 			type[1] = '\0';
 

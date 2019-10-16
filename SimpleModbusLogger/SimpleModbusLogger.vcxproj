@@ -165,12 +165,14 @@
   <ItemGroup>
     <ClCompile Include="IniParser.cpp" />
     <ClCompile Include="LogData.cpp" />
+    <ClCompile Include="LoggerSettings.cpp" />
     <ClCompile Include="LogItem.cpp" />
     <ClCompile Include="SimpleModbusLogger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IniParser.h" />
     <ClInclude Include="LogData.h" />
+    <ClInclude Include="LoggerSettings.h" />
     <ClInclude Include="LogItem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
