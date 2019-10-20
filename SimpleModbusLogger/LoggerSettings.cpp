@@ -13,11 +13,27 @@ void LoggerSettings::setLogData(LogData* logData)
 }
 
 ///
+/// Ustawienie obiektu zapisuj¹cego dane do sterownika
+///
+void LoggerSettings::setDataWriter(DataWriter* dataWriter)
+{
+	this->dataWriter = dataWriter;
+}
+
+///
 /// Pobranie aktualnej listy zmiennych do odczytu
 ///
 LogData* LoggerSettings::getLogData()
 {
 	return logData;
+}
+
+///
+/// Pobranie obiektu zapisuj¹cego dane do sterownika
+///
+DataWriter* LoggerSettings::getDataWriter()
+{
+	return dataWriter;
 }
 
 ///

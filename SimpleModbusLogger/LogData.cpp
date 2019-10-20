@@ -71,7 +71,7 @@ void LogData::optimize()
 
 	while (std::getline(data_file, item_str))
 	{
-		std::cout << "F: " << item_str << std::endl;
+		//std::cout << "F: " << item_str << std::endl;
 		type[0] = item_str[1];
 		
 		if (!isdigit(item_str[2]))

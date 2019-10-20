@@ -7,7 +7,6 @@
 #include <mysqlx/xdevapi.h>
 #include "LogItem.h"
 
-
 using ::std::string;
 using ::std::vector;
 

@@ -11,27 +11,34 @@
 void logging_thread(LoggerSettings *settings)
 {
 	while (true) {
-		if (settings->isStopSignalSent())
+		//Obsługa zatrzymania cyklu
+		if (settings->isStopSignalSent())	//< Po otrzymaniu sygnału zatrzymania
 		{
-			settings->setStopped(true);
-			break;
+			settings->setStopped(true);		//< Ustaw stan na "zatrzymany" 
+			break;							//< Zatrzymaj cykl
 		}
 
-		if (settings->isPauseSignalSent())
-			settings->setPaused(true);
+		//Obsługa wstrzymania cyklu
+		if (settings->isPauseSignalSent())	//< Po otrzymaniu sygnału wstrzymania
+			settings->setPaused(true);		//< Ustaw stan na "wstrzymany"
 
-		if (settings->isPaused())
+		if (settings->isPaused())			//< Jeśli stan == "wstrzymany"
 		{
-			if (settings->isResumeSignalSent())
-				settings->setPaused(false);
-			continue;
+			//Obsługa wznowienia cyklu
+			if (settings->isResumeSignalSent())	//< Po otrzymaniu sygnału wznowienia
+				settings->setPaused(false);		//< Ustaw stan na "działa"
+			else								//< Jeśli dalej wstrzymany
+				continue;						//< Pomiń cykl
 		}
 
 		//Pobierz czas rozpoczęcia cyklu
 		auto start = std::chrono::system_clock::now();
 		
+		//Zapisz zmienne do sterownika
+		settings->getDataWriter()->write();
+
 		//Pobierz dane i zapisz do bazy danych
-		settings->getLogData()->log();
+		//settings->getLogData()->log();
 
 		//Pobierz czas zakończenia cyklu i wyznacz czas trwania cyklu
 		auto end = std::chrono::system_clock::now();
@@ -49,6 +56,7 @@ int main()
 	modbus_t* ctx = nullptr;
 	mysqlx::Session* db = nullptr;
 	LogData* logdata = nullptr;
+	DataWriter* dataWriter = nullptr;
 	
 	//Wczytanie pliku konfiguracji
 	IniParser config("config.ini");
@@ -118,7 +126,7 @@ int main()
 		//Utworzenie bazy danych, jeśli nie istnieje
 		mysqlx::Schema schema = db->createSchema(db_database, true);
 
-		//Utworzenie tabel jeśli nie istnieją
+		//Utworzenie tabel jeśli nie istnieją		
 		mysqlx::SqlStatement stmt = db->sql(
 			"CREATE TABLE IF NOT EXISTS data("
 			"	id int AUTO_INCREMENT,"
@@ -131,6 +139,17 @@ int main()
 			");"
 		);
 		mysqlx::SqlResult result = stmt.execute();
+
+		stmt = db->sql(
+			"CREATE TABLE IF NOT EXISTS writes("
+			"	id int AUTO_INCREMENT,"
+			"	type varchar(2) NOT NULL,"
+			"	address int NOT NULL,"
+			"	value int NOT NULL,"
+			"	PRIMARY KEY(id)"
+			");"
+		);
+		result = stmt.execute();
 	}
 	catch(std::exception e)
 	{
@@ -143,6 +162,9 @@ int main()
 	//Wczytanie czasu cyklu programu
 	sweep_time = config.getInt("sweep_time");
 
+	//Przygotowanie obiektu zapisującego dane do sterownika 
+	dataWriter = new DataWriter(ctx, db);
+
 	//Przygotowanie listy zmiennych do odczytu
 	logdata = new LogData("logdata.cfg", ctx, db);
 	logdata->optimize();
@@ -150,6 +172,7 @@ int main()
 	//Utworzenie obiektu do komunikacji z wątkiem dziennika
 	LoggerSettings* loggerSettings = new LoggerSettings();
 	loggerSettings->setLogData(logdata);
+	loggerSettings->setDataWriter(dataWriter);
 	loggerSettings->setSweepTime(sweep_time);
 
 	//Utworzenie wątku dziennika

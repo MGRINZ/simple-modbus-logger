@@ -131,7 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files %28x86%29\MySQL\MySQL Connector C++ 8.0\include;./include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\MySQL\MySQL Connector C++ 8.0\include;./include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -163,6 +163,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DataWriter.cpp" />
     <ClCompile Include="IniParser.cpp" />
     <ClCompile Include="LogData.cpp" />
     <ClCompile Include="LoggerSettings.cpp" />
@@ -170,6 +171,7 @@
     <ClCompile Include="SimpleModbusLogger.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DataWriter.h" />
     <ClInclude Include="IniParser.h" />
     <ClInclude Include="LogData.h" />
     <ClInclude Include="LoggerSettings.h" />

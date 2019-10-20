@@ -1,11 +1,13 @@
 #pragma once
 #include <atomic>
 #include "LogData.h"
+#include "DataWriter.h"
 
 class LoggerSettings
 {
 	private:
 		LogData *logData = nullptr;
+		DataWriter *dataWriter = nullptr;
 		int sweep_time = 100;
 		bool stop_signal = false;			//< Sygna³ zatrzymania w¹tku
 		std::atomic_bool stopped = false;	//< Czy w¹tek zosta³ zatrzymany
@@ -15,7 +17,9 @@ class LoggerSettings
 	public:
 		LoggerSettings();
 		void setLogData(LogData* logData);
+		void setDataWriter(DataWriter* dataWriter);
 		LogData* getLogData();
+		DataWriter* getDataWriter();
 		void setSweepTime(int sweep_time);
 		int getSweepTime();
 		void stop();
