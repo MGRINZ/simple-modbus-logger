@@ -5,12 +5,25 @@ const char* LogItem::ITEM_OUTPUT = "Q";
 const char* LogItem::ITEM_REGISTER = "R";
 const char* LogItem::ITEM_ANALOG_INPUT = "AI";
 
-LogItem::LogItem(char *var, short address, char *type, string label)
+const std::map<string, short> LogItem::ITEM_TYPE_SIZES = {
+	{"INT", 1},
+	{"DINT", 2}
+};
+
+LogItem::LogItem(char *var, short address, const char *type, string label)
 {
 	strcpy_s(this->var, sizeof(this->var), var);
 	this->address = address;
-	strcpy_s(this->type, sizeof(this->type), type);
+
+	if (!strlen(type))
+		strcpy_s(this->type, sizeof(this->type), "INT");
+	else
+		strcpy_s(this->type, sizeof(this->type), type);
+	
 	this->label = label;
+
+	//Ustalenie rozmiaru zmiennej
+	size = ITEM_TYPE_SIZES.at(this->type);
 }
 
 char* LogItem::getVar()

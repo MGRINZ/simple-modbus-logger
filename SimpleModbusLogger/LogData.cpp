@@ -77,6 +77,9 @@ void LogData::optimize()
 		
 		std::getline(line, token, ';');
 		
+		if (token[0] == '#')
+			continue;
+
 		var[0] = token[1];
 
 		if (!isdigit(token[2]))
@@ -137,6 +140,7 @@ void LogData::log()
 
 		for (int j = 1; j < items_length; j++)
 		{
+			//std::cout << item[j - 1].getSize() << std::endl;
 			if (item[j].getAddress() == item[j - 1].getAddress() + item[j - 1].getSize())
 				count += item[j].getSize();
 
@@ -157,12 +161,11 @@ void LogData::log()
 				else if (!strcmp(item[0].getVar(), "AI"))
 					fetchAnalogInput(start, count, item, item_index);
 				
-				std::cout << "i: " << item_index << " c: " << count << " s: " << start << " " << start << "-" << start + count - 1 << std::endl;
+				std::cout << "v: " << item[0].getVar() << " i: " << item_index << " s: " << start << " c: " << count << " " << start << "-" << start + count - 1 << std::endl;
 
-				item_index += count;
-				start = item[item_index].getAddress();
-
-				count = item[item_index].getSize();
+				item_index = j + 1;
+				start = item[j].getAddress();
+				count = item[j].getSize();
 
 				split = false;
 			}

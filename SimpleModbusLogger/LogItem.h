@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <map>
 
 using ::std::string;
 
@@ -11,11 +12,12 @@ class LogItem
 		char var[3];
 		short address;
 		char type[5];
+		short size = 1;
 		string label;
 		double value = 0.0;
-		short size = 1;
+		static const std::map<string, short> ITEM_TYPE_SIZES;
 	public:
-		LogItem(char *, short, char *, string);
+		LogItem(char *, short, const char *, string);
 		char* getVar();
 		short getAddress();
 		void setSize(short size);
