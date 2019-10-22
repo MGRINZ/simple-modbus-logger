@@ -5,16 +5,17 @@ const char* LogItem::ITEM_OUTPUT = "Q";
 const char* LogItem::ITEM_REGISTER = "R";
 const char* LogItem::ITEM_ANALOG_INPUT = "AI";
 
-LogItem::LogItem(char *type, short address, string label)
+LogItem::LogItem(char *var, short address, char *type, string label)
 {
-	strcpy_s(this->type, 3, type);
+	strcpy_s(this->var, sizeof(this->var), var);
 	this->address = address;
+	strcpy_s(this->type, sizeof(this->type), type);
 	this->label = label;
 }
 
-char* LogItem::getType()
+char* LogItem::getVar()
 {
-	return type;
+	return var;
 }
 
 short LogItem::getAddress()

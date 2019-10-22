@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <modbus.h>
 #include <mysqlx/xdevapi.h>

@@ -8,14 +8,15 @@ using ::std::string;
 class LogItem
 {
 	private:
-		char type[3];
+		char var[3];
 		short address;
+		char type[5];
 		string label;
-		short value = 0;
+		double value = 0.0;
 		short size = 1;
 	public:
-		LogItem(char *, short, string);
-		char* getType();
+		LogItem(char *, short, char *, string);
+		char* getVar();
 		short getAddress();
 		void setSize(short size);
 		short getSize();

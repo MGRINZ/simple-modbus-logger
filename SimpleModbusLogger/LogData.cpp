@@ -8,7 +8,7 @@ void LogData::save(vector<LogItem>& items)
 			mysqlx::SqlStatement stmt = db->sql(
 				"INSERT INTO data(type, address, value, label) VALUES (?, ?, ?, ?)"
 			);
-			stmt.bind(item.getType());
+			stmt.bind(item.getVar());
 			stmt.bind(item.getAddress());
 			stmt.bind(item.getValue());
 			stmt.bind(item.getLabel());
@@ -58,8 +58,9 @@ void LogData::optimize()
 	std::ifstream data_file(path);
 	string item_str;
 
-	char type[3];
+	char var[3];
 	short address = 0;
+	char type[5];
 	string label;
 
 	int semicolon = 0;
@@ -71,35 +72,38 @@ void LogData::optimize()
 
 	while (std::getline(data_file, item_str))
 	{
-		//std::cout << "F: " << item_str << std::endl;
-		type[0] = item_str[1];
+		std::stringstream line(item_str);
+		string token;
 		
-		if (!isdigit(item_str[2]))
+		std::getline(line, token, ';');
+		
+		var[0] = token[1];
+
+		if (!isdigit(token[2]))
 		{
-			type[1] = item_str[2];
-			type[2] = '\0';
+			var[1] = token[2];
+			var[2] = '\0';
 		}
 		else
-			type[1] = '\0';
+			var[1] = '\0';
 
-		semicolon = item_str.find(";");
+		address = atoi(token.substr(strlen(var) + 1).c_str());
 
-		address = atoi(item_str.substr(strlen(type) + 1, semicolon).c_str());
-		
-		if (semicolon != -1)
-			label = item_str.substr(semicolon + 1);
-		else
-			label = "";
+		std::getline(line, token, ';');
+		strcpy_s(type, sizeof(type), token.c_str());
 
-		LogItem item(type, address, label);
+		std::getline(line, token, ';');
+		label = token;
 
-		if(!strcmp(type, LogItem::ITEM_INPUT))
+		LogItem item(var, address, type, label);
+
+		if(!strcmp(var, LogItem::ITEM_INPUT))
 			inputs.push_back(item);
-		else if(!strcmp(type, LogItem::ITEM_OUTPUT))
+		else if(!strcmp(var, LogItem::ITEM_OUTPUT))
 			outputs.push_back(item);
-		else if(!strcmp(type, LogItem::ITEM_REGISTER))
+		else if(!strcmp(var, LogItem::ITEM_REGISTER))
 			registers.push_back(item);
-		else if(!strcmp(type, LogItem::ITEM_ANALOG_INPUT))
+		else if(!strcmp(var, LogItem::ITEM_ANALOG_INPUT))
 			analogInputs.push_back(item);
 	}
 	
@@ -144,13 +148,13 @@ void LogData::log()
 
 			if (item[j].getAddress() != item[j - 1].getAddress() + item[j - 1].getSize() || j == items_length - 1 || split)
 			{
-				if (!strcmp(item[0].getType(), "Q"))
+				if (!strcmp(item[0].getVar(), "Q"))
 					fetchOutput(start, count, item, item_index);
-				else if (!strcmp(item[0].getType(), "I"))
+				else if (!strcmp(item[0].getVar(), "I"))
 					fetchInput(start, count, item, item_index);
-				else if (!strcmp(item[0].getType(), "R"))
+				else if (!strcmp(item[0].getVar(), "R"))
 					fetchRegisters(start, count, item, item_index);
-				else if (!strcmp(item[0].getType(), "AI"))
+				else if (!strcmp(item[0].getVar(), "AI"))
 					fetchAnalogInput(start, count, item, item_index);
 				
 				std::cout << "i: " << item_index << " c: " << count << " s: " << start << " " << start << "-" << start + count - 1 << std::endl;
