@@ -35,10 +35,10 @@ void logging_thread(LoggerSettings *settings)
 		auto start = std::chrono::system_clock::now();
 		
 		//Zapisz zmienne do sterownika
-		settings->getDataWriter()->write();
+		//settings->getDataWriter()->write();
 
 		//Pobierz dane i zapisz do bazy danych
-		//settings->getLogData()->log();
+		settings->getLogData()->log();
 
 		//Pobierz czas zakończenia cyklu i wyznacz czas trwania cyklu
 		auto end = std::chrono::system_clock::now();
@@ -132,7 +132,7 @@ int main()
 			"	id int AUTO_INCREMENT,"
 			"	type varchar(2) NOT NULL,"
 			"	address int NOT NULL,"
-			"	value int NOT NULL,"
+			"	value double NOT NULL,"
 			"	time timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,"
 			"	label varchar(255),"
 			"	PRIMARY KEY(id)"

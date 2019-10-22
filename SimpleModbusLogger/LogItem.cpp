@@ -22,17 +22,27 @@ short LogItem::getAddress()
 	return address;
 }
 
+void LogItem::setSize(short size)
+{
+	this->size = size;
+}
+
+short LogItem::getSize()
+{
+	return this->size;
+}
+
 string LogItem::getLabel()
 {
 	return label;
 }
 
-void LogItem::setValue(short value)
+void LogItem::setValue(uint16_t value)
 {
 	this->value = value;
 }
 
-short LogItem::getValue()
+double LogItem::getValue()
 {
 	return value;
 }

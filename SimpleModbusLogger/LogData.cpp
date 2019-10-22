@@ -12,7 +12,7 @@ void LogData::save(vector<LogItem>& items)
 			stmt.bind(item.getAddress());
 			stmt.bind(item.getValue());
 			stmt.bind(item.getLabel());
-			stmt.execute();
+			mysqlx::SqlResult result = stmt.execute();
 		}
 		catch (std::exception e)
 		{
@@ -128,21 +128,21 @@ void LogData::log()
 
 		int item_index = 0;
 		int start = item[0].getAddress();
-		int count = 1;
+		int count = item[0].getSize();
 		bool split = false;
 
 		for (int j = 1; j < items_length; j++)
 		{
-			if (item[j].getAddress() - item[j - 1].getAddress() == 1)
-				count++;
+			if (item[j].getAddress() == item[j - 1].getAddress() + item[j - 1].getSize())
+				count += item[j].getSize();
 
 			if (count > 100)
 			{
 				split = true;
-				count--;
+				count -= item[j].getSize();
 			}
 
-			if (item[j].getAddress() - item[j - 1].getAddress() != 1 || j == items_length - 1 || split)
+			if (item[j].getAddress() != item[j - 1].getAddress() + item[j - 1].getSize() || j == items_length - 1 || split)
 			{
 				if (!strcmp(item[0].getType(), "Q"))
 					fetchOutput(start, count, item, item_index);
@@ -155,16 +155,16 @@ void LogData::log()
 				
 				std::cout << "i: " << item_index << " c: " << count << " s: " << start << " " << start << "-" << start + count - 1 << std::endl;
 
-				start = item[item_index + count].getAddress();
 				item_index += count;
+				start = item[item_index].getAddress();
 
-				count = 1;
+				count = item[item_index].getSize();
 
 				split = false;
 			}
 		}
 
-		save(item);
+		//save(item);
 	}
 }
 
