@@ -1,7 +1,11 @@
 #pragma once
 #include <iostream>
+#include <string>
 #include <modbus.h>
 #include <mysqlx/xdevapi.h>
+#include "PlcVariable.h"
+
+using ::std::string;
 
 class DataWriter
 {

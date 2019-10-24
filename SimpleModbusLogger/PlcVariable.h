@@ -6,44 +6,54 @@
 
 using ::std::string;
 
-class LogItem
+class PlcVariable
 {
 	private:
-		char var[3];
-		short address;
-		char type[6];
-		short size = 1;
-		string label;
-		double value = 0.0;
-		static const std::map<string, short> ITEM_TYPE_SIZES;
+		char var[3];				//< Typ zmiennej I, Q, R, AI
+		short address;				//< Adres zmiennej
+		char type[6];				//< Typ zmiennej
+		short size = 1;				//< Rozmiar zmiennej wyra¿ony w rejestrach
+		string label;				//< Etykieta
+		unsigned short value[4];	//< Wartoœci rejestrów sk³adaj¹cych siê na zmienn¹
+		double realValue = 0.0;		//< Rzeczywista przechowywana wartoœæ zmiennej
 		bool isReal();
 		bool isLReal();
 		bool isSigned();
-		struct TypeUnions;
 	public:
-		class TypeException;
-		LogItem(char *, short, const char *, string);
+		PlcVariable(char *, short, const char *, string);
 		char* getVar();
 		short getAddress();
-		void setSize(short size);
+		char* getType();
 		short getSize();
 		string getLabel();
 		template <class T>
 		void setValue(T &value);
-		double getValue();
+		void setRealValue(double value);
+		unsigned short* getValue();
+		double getRealValue();
 		static const char* ITEM_INPUT;
 		static const char* ITEM_OUTPUT;
 		static const char* ITEM_REGISTER;
 		static const char* ITEM_ANALOG_INPUT;
+		static const std::map<string, short> ITEM_TYPE_SIZES;
+		class TypeException;
+		struct TypeUnions;
 };
 
+///
+/// Ustawienie wartoœci zmiennej
+/// Metoda pobiera referencjê do wartoœci zmiennej odczytanej ze sterownika i zamienia j¹
+/// na typ double w celu zapisu do bazy danych.
+/// Je¿eli typ zmiennej przekracza rozmiar jednego rejestru, metoda odczytuje size kolejnych
+/// komórek pamiêci i zapisuje rzeczywist¹ wartoœæ zmiennej.
+///
 template <class T>
-void LogItem::setValue(T& value)
+void PlcVariable::setValue(T& value)
 {
 	//Jeœli zmienna nie jest rejestrem
 	if (strcmp(this->var, ITEM_REGISTER))
 	{
-		this->value = value;	//< Zapisz wartoœæ
+		this->realValue = value;	//< Zapisz wartoœæ
 		return;
 	}
 	
@@ -60,19 +70,17 @@ void LogItem::setValue(T& value)
 		value_ptr++;
 	}
 
-	std::cout << "temp: " << temp << std::endl;
-
 	if (isReal())
 	{
 		union TypeUnions::u_float f;
 		f.bits = temp;
-		this->value = f.value;
+		this->realValue = f.value;
 	}
 	else if (isLReal())
 	{
 		union TypeUnions::u_double d;
 		d.bits = temp;
-		this->value = d.value;
+		this->realValue = d.value;
 	}
 	else if (isSigned())
 	{
@@ -83,15 +91,13 @@ void LogItem::setValue(T& value)
 			ones <<= (16 * size);
 			temp |= ones;
 		}
-		this->value = (long long) temp;
+		this->realValue = (long long) temp;
 	}
 	else
-		this->value = temp;
-
-	std::cout << "value: " << this->value << std::endl;
+		this->realValue = temp;
 }
 
-class LogItem::TypeException : public std::exception
+class PlcVariable::TypeException : public std::exception
 {
 	private:
 		string type;
@@ -100,7 +106,7 @@ class LogItem::TypeException : public std::exception
 		const char* what();
 };
 
-struct LogItem::TypeUnions
+struct PlcVariable::TypeUnions
 {
 	union u_float
 	{

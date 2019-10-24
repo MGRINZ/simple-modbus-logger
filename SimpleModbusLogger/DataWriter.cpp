@@ -21,10 +21,11 @@ void DataWriter::write()
 	//Zapytanie o wyjœcia
 	mysqlx::SqlStatement qStmt = db->sql(
 		"SELECT id, address, value FROM writes "
-		"WHERE type = 'Q'"
+		"WHERE var = 'Q'"
 	);
 	qResult = qStmt.execute();
 
+	//Zapis wyjœæ dyskretnych
 	while (row = qResult.fetchOne()) {
 		modbus_write_bit(modbus_ctx, row[1], row[2]);
 		dStmt.bind(row[0]);
@@ -33,14 +34,20 @@ void DataWriter::write()
 
 	//Zapytanie o rejestry
 	qStmt = db->sql(
-		"SELECT id, address, value FROM writes "
-		"WHERE type = 'R'"
+		"SELECT id, address, value, type FROM writes "
+		"WHERE var = 'R'"
 	);
 	qResult = qStmt.execute();
 
+	//Zapis rejestrów
 	while (row = qResult.fetchOne())
 	{
-		modbus_write_register(modbus_ctx, row[1], (uint16_t) ((int)row[2]));
+		double value = row[2];
+		string type = (string) row[3];
+		PlcVariable item((char*) "R", (int) row[1], type.c_str(), "");
+		item.setRealValue(value);
+
+		modbus_write_registers(modbus_ctx, item.getAddress(), item.getSize(), item.getValue());
 		dStmt.bind(row[0]);
 		dResult = dStmt.execute();
 	}

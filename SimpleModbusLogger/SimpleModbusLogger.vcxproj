@@ -167,7 +167,7 @@
     <ClCompile Include="IniParser.cpp" />
     <ClCompile Include="LogData.cpp" />
     <ClCompile Include="LoggerSettings.cpp" />
-    <ClCompile Include="LogItem.cpp" />
+    <ClCompile Include="PlcVariable.cpp" />
     <ClCompile Include="SimpleModbusLogger.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -175,7 +175,7 @@
     <ClInclude Include="IniParser.h" />
     <ClInclude Include="LogData.h" />
     <ClInclude Include="LoggerSettings.h" />
-    <ClInclude Include="LogItem.h" />
+    <ClInclude Include="PlcVariable.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
