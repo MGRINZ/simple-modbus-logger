@@ -60,7 +60,7 @@ void LogData::optimize()
 
 	char var[3];
 	short address = 0;
-	char type[5];
+	char type[6];
 	string label;
 
 	int semicolon = 0;
@@ -79,35 +79,44 @@ void LogData::optimize()
 		
 		if (token[0] == '#')
 			continue;
+		
+		try {
+			var[0] = token[1];
 
-		var[0] = token[1];
+			if (!isdigit(token[2]))
+			{
+				var[1] = token[2];
+				var[2] = '\0';
+			}
+			else
+				var[1] = '\0';
 
-		if (!isdigit(token[2]))
-		{
-			var[1] = token[2];
-			var[2] = '\0';
+			address = atoi(token.substr(strlen(var) + 1).c_str());
+
+			std::getline(line, token, ';');
+			if (token.size() > sizeof(type))
+				throw LogItem::TypeException(token);
+			strcpy_s(type, sizeof(type), token.c_str());
+		
+			std::getline(line, token, ';');
+			label = token;
+		
+			LogItem item(var, address, type, label);
+
+			if(!strcmp(var, LogItem::ITEM_INPUT))
+				inputs.push_back(item);
+			else if(!strcmp(var, LogItem::ITEM_OUTPUT))
+				outputs.push_back(item);
+			else if(!strcmp(var, LogItem::ITEM_REGISTER))
+				registers.push_back(item);
+			else if(!strcmp(var, LogItem::ITEM_ANALOG_INPUT))
+				analogInputs.push_back(item);
 		}
-		else
-			var[1] = '\0';
+		catch (LogItem::TypeException e)
+		{
+			std::cout << e.what() << std::endl;
+		}
 
-		address = atoi(token.substr(strlen(var) + 1).c_str());
-
-		std::getline(line, token, ';');
-		strcpy_s(type, sizeof(type), token.c_str());
-
-		std::getline(line, token, ';');
-		label = token;
-
-		LogItem item(var, address, type, label);
-
-		if(!strcmp(var, LogItem::ITEM_INPUT))
-			inputs.push_back(item);
-		else if(!strcmp(var, LogItem::ITEM_OUTPUT))
-			outputs.push_back(item);
-		else if(!strcmp(var, LogItem::ITEM_REGISTER))
-			registers.push_back(item);
-		else if(!strcmp(var, LogItem::ITEM_ANALOG_INPUT))
-			analogInputs.push_back(item);
 	}
 	
 	sort(inputs);
@@ -163,9 +172,9 @@ void LogData::log()
 				
 				std::cout << "v: " << item[0].getVar() << " i: " << item_index << " s: " << start << " c: " << count << " " << start << "-" << start + count - 1 << std::endl;
 
-				item_index = j + 1;
-				start = item[j].getAddress();
-				count = item[j].getSize();
+				item_index = j;
+				start = item[item_index].getAddress();
+				count = item[item_index].getSize();
 
 				split = false;
 			}
@@ -191,7 +200,7 @@ void LogData::fetchInput(short start, short count, vector<LogItem>& items, int i
 	uint8_t* dest = new uint8_t[count];
 	modbus_read_input_bits(modbus_ctx, start, count, dest);
 
-	for (int i = 0; i < count; i++)
+	for (int i = 0; i < count; i += items[item_index + i].getSize())
 		items[item_index + i].setValue(dest[i]);
 
 	delete[] dest;
@@ -202,8 +211,15 @@ void LogData::fetchRegisters(short start, short count, vector<LogItem> &items, i
 	uint16_t *dest = new uint16_t[count];
 	modbus_read_registers(modbus_ctx, start, count, dest);
 
-	for (int i = 0; i < count; i++)
-		items[item_index + i].setValue(dest[i]);
+	int item_i = 0;
+	int dest_i = 0;
+	while (dest_i < count)
+	{
+		items[item_index + item_i].setValue(dest[dest_i]);
+		
+		dest_i += items[item_index + item_i].getSize();
+		item_i++;
+	}
 
 	delete[] dest;
 }
