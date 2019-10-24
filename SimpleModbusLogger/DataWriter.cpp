@@ -27,7 +27,9 @@ void DataWriter::write()
 
 	//Zapis wyjœæ dyskretnych
 	while (row = qResult.fetchOne()) {
-		modbus_write_bit(modbus_ctx, row[1], row[2]);
+		double value = row[2];
+
+		modbus_write_bit(modbus_ctx, row[1], (int)value);
 		dStmt.bind(row[0]);
 		dResult = dStmt.execute();
 	}
