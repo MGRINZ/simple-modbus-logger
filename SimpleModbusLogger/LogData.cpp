@@ -1,18 +1,19 @@
 #include "LogData.h"
 
-void LogData::save(vector<LogItem>& items)
+void LogData::save(vector<PlcVariable>& items)
 {
 	for (auto item : items)
 	{
 		try {
 			mysqlx::SqlStatement stmt = db->sql(
-				"INSERT INTO data(type, address, value, label) VALUES (?, ?, ?, ?)"
+				"INSERT INTO data(var, address, type, value, label) VALUES (?, ?, ?, ?, ?)"
 			);
-			stmt.bind(item.getType());
+			stmt.bind(item.getVar());
 			stmt.bind(item.getAddress());
-			stmt.bind(item.getValue());
+			stmt.bind(item.getType());
+			stmt.bind(item.getRealValue());
 			stmt.bind(item.getLabel());
-			stmt.execute();
+			mysqlx::SqlResult result = stmt.execute();
 		}
 		catch (std::exception e)
 		{
@@ -28,7 +29,7 @@ LogData::LogData(string path, modbus_t *modbus_ctx, mysqlx::Session *db)
 	this->db = db;
 }
 
-short LogData::minimum(vector<LogItem> &items, int start, int end)
+short LogData::minimum(vector<PlcVariable> &items, int start, int end)
 {
 	short min_index = start;
 
@@ -40,14 +41,14 @@ short LogData::minimum(vector<LogItem> &items, int start, int end)
 	return min_index;
 }
 
-void LogData::sort(vector<LogItem> &items)
+void LogData::sort(vector<PlcVariable> &items)
 {
 	int items_length = items.size();
 	int min = 0;
 	for (int i = 0; i < items_length; i++)
 	{
 		min = minimum(items, i, items_length);
-		LogItem temp = items[i];
+		PlcVariable temp = items[i];
 		items[i] = items[min];
 		items[min] = temp;
 	}
@@ -58,8 +59,9 @@ void LogData::optimize()
 	std::ifstream data_file(path);
 	string item_str;
 
-	char type[3];
+	char var[3];
 	short address = 0;
+	char type[6];
 	string label;
 
 	int semicolon = 0;
@@ -71,36 +73,51 @@ void LogData::optimize()
 
 	while (std::getline(data_file, item_str))
 	{
-		//std::cout << "F: " << item_str << std::endl;
-		type[0] = item_str[1];
+		std::stringstream line(item_str);
+		string token;
 		
-		if (!isdigit(item_str[2]))
-		{
-			type[1] = item_str[2];
-			type[2] = '\0';
+		std::getline(line, token, ';');
+		
+		if (token[0] == '#')
+			continue;
+		
+		try {
+			var[0] = token[1];
+
+			if (!isdigit(token[2]))
+			{
+				var[1] = token[2];
+				var[2] = '\0';
+			}
+			else
+				var[1] = '\0';
+
+			address = atoi(token.substr(strlen(var) + 1).c_str());
+
+			std::getline(line, token, ';');
+			if (token.size() > sizeof(type))
+				throw PlcVariable::TypeException(token);
+			strcpy_s(type, sizeof(type), token.c_str());
+		
+			std::getline(line, token, ';');
+			label = token;
+		
+			PlcVariable item(var, address, type, label);
+
+			if(!strcmp(var, PlcVariable::ITEM_INPUT))
+				inputs.push_back(item);
+			else if(!strcmp(var, PlcVariable::ITEM_OUTPUT))
+				outputs.push_back(item);
+			else if(!strcmp(var, PlcVariable::ITEM_REGISTER))
+				registers.push_back(item);
+			else if(!strcmp(var, PlcVariable::ITEM_ANALOG_INPUT))
+				analogInputs.push_back(item);
 		}
-		else
-			type[1] = '\0';
+		catch (PlcVariable::TypeException e)
+		{
+			std::cout << e.what() << std::endl;
+		}
 
-		semicolon = item_str.find(";");
-
-		address = atoi(item_str.substr(strlen(type) + 1, semicolon).c_str());
-		
-		if (semicolon != -1)
-			label = item_str.substr(semicolon + 1);
-		else
-			label = "";
-
-		LogItem item(type, address, label);
-
-		if(!strcmp(type, LogItem::ITEM_INPUT))
-			inputs.push_back(item);
-		else if(!strcmp(type, LogItem::ITEM_OUTPUT))
-			outputs.push_back(item);
-		else if(!strcmp(type, LogItem::ITEM_REGISTER))
-			registers.push_back(item);
-		else if(!strcmp(type, LogItem::ITEM_ANALOG_INPUT))
-			analogInputs.push_back(item);
 	}
 	
 	sort(inputs);
@@ -111,7 +128,7 @@ void LogData::optimize()
 
 void LogData::log()
 {
-	vector<LogItem>* items[4] = {
+	vector<PlcVariable>* items[4] = {
 		&inputs,
 		&outputs,
 		&registers,
@@ -120,7 +137,7 @@ void LogData::log()
 
 	for (int i = 0; i < 4; i++)
 	{
-		vector<LogItem>& item = *items[i];
+		vector<PlcVariable>& item = *items[i];
 		int items_length = item.size();
 
 		if (!items_length)
@@ -128,37 +145,37 @@ void LogData::log()
 
 		int item_index = 0;
 		int start = item[0].getAddress();
-		int count = 1;
+		int count = item[0].getSize();
 		bool split = false;
 
 		for (int j = 1; j < items_length; j++)
 		{
-			if (item[j].getAddress() - item[j - 1].getAddress() == 1)
-				count++;
+			//std::cout << item[j - 1].getSize() << std::endl;
+			if (item[j].getAddress() == item[j - 1].getAddress() + item[j - 1].getSize())
+				count += item[j].getSize();
 
 			if (count > 100)
 			{
 				split = true;
-				count--;
+				count -= item[j].getSize();
 			}
 
-			if (item[j].getAddress() - item[j - 1].getAddress() != 1 || j == items_length - 1 || split)
+			if (item[j].getAddress() != item[j - 1].getAddress() + item[j - 1].getSize() || j == items_length - 1 || split)
 			{
-				if (!strcmp(item[0].getType(), "Q"))
+				if (!strcmp(item[0].getVar(), "Q"))
 					fetchOutput(start, count, item, item_index);
-				else if (!strcmp(item[0].getType(), "I"))
+				else if (!strcmp(item[0].getVar(), "I"))
 					fetchInput(start, count, item, item_index);
-				else if (!strcmp(item[0].getType(), "R"))
+				else if (!strcmp(item[0].getVar(), "R"))
 					fetchRegisters(start, count, item, item_index);
-				else if (!strcmp(item[0].getType(), "AI"))
+				else if (!strcmp(item[0].getVar(), "AI"))
 					fetchAnalogInput(start, count, item, item_index);
 				
-				std::cout << "i: " << item_index << " c: " << count << " s: " << start << " " << start << "-" << start + count - 1 << std::endl;
+				//std::cout << "v: " << item[0].getVar() << " i: " << item_index << " s: " << start << " c: " << count << " " << start << "-" << start + count - 1 << std::endl;
 
-				start = item[item_index + count].getAddress();
-				item_index += count;
-
-				count = 1;
+				item_index = j;
+				start = item[item_index].getAddress();
+				count = item[item_index].getSize();
 
 				split = false;
 			}
@@ -168,7 +185,7 @@ void LogData::log()
 	}
 }
 
-void LogData::fetchOutput(short start, short count, vector<LogItem>& items, int item_index)
+void LogData::fetchOutput(short start, short count, vector<PlcVariable>& items, int item_index)
 {
 	uint8_t* dest = new uint8_t[count];
 	modbus_read_bits(modbus_ctx, start, count, dest);
@@ -179,29 +196,36 @@ void LogData::fetchOutput(short start, short count, vector<LogItem>& items, int 
 	delete[] dest;
 }
 
-void LogData::fetchInput(short start, short count, vector<LogItem>& items, int item_index)
+void LogData::fetchInput(short start, short count, vector<PlcVariable>& items, int item_index)
 {
 	uint8_t* dest = new uint8_t[count];
 	modbus_read_input_bits(modbus_ctx, start, count, dest);
 
-	for (int i = 0; i < count; i++)
+	for (int i = 0; i < count; i += items[item_index + i].getSize())
 		items[item_index + i].setValue(dest[i]);
 
 	delete[] dest;
 }
 
-void LogData::fetchRegisters(short start, short count, vector<LogItem> &items, int item_index)
+void LogData::fetchRegisters(short start, short count, vector<PlcVariable> &items, int item_index)
 {
 	uint16_t *dest = new uint16_t[count];
 	modbus_read_registers(modbus_ctx, start, count, dest);
 
-	for (int i = 0; i < count; i++)
-		items[item_index + i].setValue(dest[i]);
+	int item_i = 0;
+	int dest_i = 0;
+	while (dest_i < count)
+	{
+		items[item_index + item_i].setValue(dest[dest_i]);
+		
+		dest_i += items[item_index + item_i].getSize();
+		item_i++;
+	}
 
 	delete[] dest;
 }
 
-void LogData::fetchAnalogInput(short start, short count, vector<LogItem>& items, int item_index)
+void LogData::fetchAnalogInput(short start, short count, vector<PlcVariable>& items, int item_index)
 {
 	uint16_t* dest = new uint16_t[count];
 	modbus_read_input_registers(modbus_ctx, start, count, dest);

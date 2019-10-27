@@ -38,7 +38,7 @@ void logging_thread(LoggerSettings *settings)
 		settings->getDataWriter()->write();
 
 		//Pobierz dane i zapisz do bazy danych
-		//settings->getLogData()->log();
+		settings->getLogData()->log();
 
 		//Pobierz czas zakończenia cyklu i wyznacz czas trwania cyklu
 		auto end = std::chrono::system_clock::now();
@@ -130,9 +130,10 @@ int main()
 		mysqlx::SqlStatement stmt = db->sql(
 			"CREATE TABLE IF NOT EXISTS data("
 			"	id int AUTO_INCREMENT,"
-			"	type varchar(2) NOT NULL,"
+			"	var varchar(2) NOT NULL,"
 			"	address int NOT NULL,"
-			"	value int NOT NULL,"
+			"	type varchar(5) NOT NULL,"
+			"	value double NOT NULL,"
 			"	time timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,"
 			"	label varchar(255),"
 			"	PRIMARY KEY(id)"
@@ -143,9 +144,10 @@ int main()
 		stmt = db->sql(
 			"CREATE TABLE IF NOT EXISTS writes("
 			"	id int AUTO_INCREMENT,"
-			"	type varchar(2) NOT NULL,"
+			"	var varchar(2) NOT NULL,"
 			"	address int NOT NULL,"
-			"	value int NOT NULL,"
+			"	type varchar(5) NOT NULL,"
+			"	value double NOT NULL,"
 			"	PRIMARY KEY(id)"
 			");"
 		);
