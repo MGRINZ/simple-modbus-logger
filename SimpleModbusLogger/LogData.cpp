@@ -9,7 +9,7 @@ void LogData::save(vector<PlcVariable>& items)
 				"INSERT INTO data(var, address, type, value, label) VALUES (?, ?, ?, ?, ?)"
 			);
 			stmt.bind(item.getVar());
-			stmt.bind(item.getAddress());
+			stmt.bind(item.getAddress() + this->offset);
 			stmt.bind(item.getType());
 			stmt.bind(item.getRealValue());
 			stmt.bind(item.getLabel());
