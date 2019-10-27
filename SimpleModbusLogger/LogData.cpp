@@ -22,11 +22,12 @@ void LogData::save(vector<PlcVariable>& items)
 	}
 }
 
-LogData::LogData(string path, modbus_t *modbus_ctx, mysqlx::Session *db)
+LogData::LogData(string path, modbus_t *modbus_ctx, mysqlx::Session *db, short offset)
 {
 	this->path = path;
 	this->modbus_ctx = modbus_ctx;
 	this->db = db;
+	this->offset = offset;
 }
 
 short LogData::minimum(vector<PlcVariable> &items, int start, int end)
@@ -60,7 +61,7 @@ void LogData::optimize()
 	string item_str;
 
 	char var[3];
-	short address = 0;
+	int address = 0;
 	char type[6];
 	string label;
 
@@ -102,7 +103,7 @@ void LogData::optimize()
 			std::getline(line, token, ';');
 			label = token;
 		
-			PlcVariable item(var, address, type, label);
+			PlcVariable item(var, address - this->offset, type, label);
 
 			if(!strcmp(var, PlcVariable::ITEM_INPUT))
 				inputs.push_back(item);
@@ -113,11 +114,14 @@ void LogData::optimize()
 			else if(!strcmp(var, PlcVariable::ITEM_ANALOG_INPUT))
 				analogInputs.push_back(item);
 		}
-		catch (PlcVariable::TypeException e)
+		catch (PlcVariable::TypeException& e)
 		{
 			std::cout << e.what() << std::endl;
 		}
-
+		catch (PlcVariable::AddressException& e)
+		{
+			std::cout << e.what() << std::endl;
+		}
 	}
 	
 	sort(inputs);

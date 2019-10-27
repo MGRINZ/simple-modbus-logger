@@ -85,6 +85,9 @@ int main()
 
 	//Domyślny czas trwania cyklu programu
 	short sweep_time = 100;
+	
+	//Domyślne przesunięcie adresu w sterowniku
+	short offset = 1;
 
 	//Wczytanie ustawień połączenia MODBUS
 	if (!strcmp(connection_type, "serial"))
@@ -153,7 +156,7 @@ int main()
 		);
 		result = stmt.execute();
 	}
-	catch(std::exception e)
+	catch(const std::exception& e)
 	{
 		//Obsługa błędów połączenia
 		std::cout << "MySQL connection error" << std::endl;
@@ -164,11 +167,14 @@ int main()
 	//Wczytanie czasu cyklu programu
 	sweep_time = config.getInt("sweep_time");
 
+	//Wczytanie przesunięcia adresu w sterowniku
+	offset = config.getInt("offset");
+
 	//Przygotowanie obiektu zapisującego dane do sterownika 
-	dataWriter = new DataWriter(ctx, db);
+	dataWriter = new DataWriter(ctx, db, offset);
 
 	//Przygotowanie listy zmiennych do odczytu
-	logdata = new LogData("logdata.cfg", ctx, db);
+	logdata = new LogData("logdata.cfg", ctx, db, offset);
 	logdata->optimize();
 	
 	//Utworzenie obiektu do komunikacji z wątkiem dziennika

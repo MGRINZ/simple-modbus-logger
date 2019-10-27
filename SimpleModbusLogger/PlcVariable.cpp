@@ -6,6 +6,7 @@ const char* PlcVariable::ITEM_REGISTER = "R";
 const char* PlcVariable::ITEM_ANALOG_INPUT = "AI";
 
 const std::map<string, short> PlcVariable::ITEM_TYPE_SIZES = {
+	{"BOOL", 1},
 	{"INT", 1},
 	{"DINT", 2},
 	{"LINT", 4},
@@ -40,15 +41,25 @@ bool PlcVariable::isSigned()
 	return type[0] != 'U';
 }
 
-PlcVariable::PlcVariable(char *var, short address, const char *type, string label)
+PlcVariable::PlcVariable(char *var, int address, const char *type, string label)
 {
 	strcpy_s(this->var, sizeof(this->var), var);
+	if (address < 0 || address > 65535)
+		throw AddressException(address);
 	this->address = address;
 
-	if (!strlen(type))
+	if (!strcmp(var, ITEM_REGISTER))
+	{
+		if (!strlen(type))
+			strcpy_s(this->type, sizeof(this->type), "INT");
+		else
+			strcpy_s(this->type, sizeof(this->type), type);
+	}
+	else if (!strcmp(var, ITEM_ANALOG_INPUT))
 		strcpy_s(this->type, sizeof(this->type), "INT");
 	else
-		strcpy_s(this->type, sizeof(this->type), type);
+		strcpy_s(this->type, sizeof(this->type), "BOOL");
+
 	
 	this->label = label;
 
@@ -145,4 +156,16 @@ const char* PlcVariable::TypeException::what()
 {
 	string msg = "Unknown type " + type;
 	return msg.c_str();
+}
+
+PlcVariable::AddressException::AddressException(int address)
+{
+	this->address = address;
+}
+
+const char* PlcVariable::AddressException::what()
+{
+	std::stringstream msg;
+	msg << "MODBUS address must be in range [0; 65535]. Passed " << address;
+	return msg.str().c_str();
 }

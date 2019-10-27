@@ -12,9 +12,10 @@ class DataWriter
 	private:
 		modbus_t* modbus_ctx;
 		mysqlx::Session* db;
+		short offset = 1;
 
 	public:
-		DataWriter(modbus_t* modbus_ctx, mysqlx::Session* db);
+		DataWriter(modbus_t* modbus_ctx, mysqlx::Session* db, short offset);
 		void write();
 };
 

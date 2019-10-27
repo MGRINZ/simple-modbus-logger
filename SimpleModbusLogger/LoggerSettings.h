@@ -8,7 +8,7 @@ class LoggerSettings
 	private:
 		LogData *logData = nullptr;
 		DataWriter *dataWriter = nullptr;
-		int sweep_time = 100;
+		short sweep_time = 100;
 		bool stop_signal = false;			//< Sygna³ zatrzymania w¹tku
 		std::atomic_bool stopped = false;	//< Czy w¹tek zosta³ zatrzymany
 		bool pause_signal = false;			//< Sygna³ wstrzymania w¹tku
@@ -20,8 +20,8 @@ class LoggerSettings
 		void setDataWriter(DataWriter* dataWriter);
 		LogData* getLogData();
 		DataWriter* getDataWriter();
-		void setSweepTime(int sweep_time);
-		int getSweepTime();
+		void setSweepTime(short sweep_time);
+		short getSweepTime();
 		void stop();
 		bool isStopSignalSent();
 		void setStopped(bool value);

@@ -1,9 +1,10 @@
 #include "DataWriter.h"
 
-DataWriter::DataWriter(modbus_t* modbus_ctx, mysqlx::Session* db)
+DataWriter::DataWriter(modbus_t* modbus_ctx, mysqlx::Session* db, short offset)
 {
 	this->modbus_ctx = modbus_ctx;
 	this->db = db;
+	this->offset = offset;
 }
 
 void DataWriter::write()
@@ -27,9 +28,14 @@ void DataWriter::write()
 
 	//Zapis wyjœæ dyskretnych
 	while (row = qResult.fetchOne()) {
+		int address = row[1];
 		double value = row[2];
 
-		modbus_write_bit(modbus_ctx, row[1], (int)value);
+		address -= this->offset;
+		
+		if (!(address < 0 || address > 65535))
+			modbus_write_bit(modbus_ctx, address, (int)value);
+
 		dStmt.bind(row[0]);
 		dResult = dStmt.execute();
 	}
@@ -44,12 +50,24 @@ void DataWriter::write()
 	//Zapis rejestrów
 	while (row = qResult.fetchOne())
 	{
+		int address = row[1];
 		double value = row[2];
 		string type = (string) row[3];
-		PlcVariable item((char*) "R", (int) row[1], type.c_str(), "");
-		item.setRealValue(value);
 
-		modbus_write_registers(modbus_ctx, item.getAddress(), item.getSize(), item.getValue());
+		address -= this->offset;
+		try {
+			PlcVariable item((char*) "R", address, type.c_str(), "");
+			item.setRealValue(value);
+
+			modbus_write_registers(modbus_ctx, item.getAddress(), item.getSize(), item.getValue());
+		}
+		catch (PlcVariable::TypeException& e) {
+			std::cout << e.what();
+		}
+		catch (PlcVariable::AddressException& e) {
+			std::cout << e.what();
+		}
+
 		dStmt.bind(row[0]);
 		dResult = dStmt.execute();
 	}

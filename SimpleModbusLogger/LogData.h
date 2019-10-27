@@ -17,13 +17,14 @@ class LogData
 		string path;
 		modbus_t *modbus_ctx;
 		mysqlx::Session *db;
+		short offset = 1;
 		vector<PlcVariable> outputs;
 		vector<PlcVariable> inputs;
 		vector<PlcVariable> registers;
 		vector<PlcVariable> analogInputs;
 		void save(vector<PlcVariable> &items);
 	public:
-		LogData(string path, modbus_t *modbus_ctx, mysqlx::Session* db);
+		LogData(string path, modbus_t *modbus_ctx, mysqlx::Session* db, short offset);
 		short minimum(vector<PlcVariable> &items, int start, int end);
 		void sort(vector<PlcVariable> &items);
 		void optimize();

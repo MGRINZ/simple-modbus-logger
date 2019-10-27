@@ -39,7 +39,7 @@ DataWriter* LoggerSettings::getDataWriter()
 ///
 /// Ustawienie czasu trwania cyklu
 ///
-void LoggerSettings::setSweepTime(int sweep_time)
+void LoggerSettings::setSweepTime(short sweep_time)
 {
 	this->sweep_time = sweep_time;
 }
@@ -47,7 +47,7 @@ void LoggerSettings::setSweepTime(int sweep_time)
 ///
 /// Pobranie aktualnego czasu trwania cyklu
 ///
-int LoggerSettings::getSweepTime()
+short LoggerSettings::getSweepTime()
 {
 	return sweep_time;
 }

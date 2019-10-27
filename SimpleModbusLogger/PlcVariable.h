@@ -20,7 +20,7 @@ class PlcVariable
 		bool isLReal();
 		bool isSigned();
 	public:
-		PlcVariable(char *, short, const char *, string);
+		PlcVariable(char* var, int address, const char* type, string label);
 		char* getVar();
 		short getAddress();
 		char* getType();
@@ -36,6 +36,7 @@ class PlcVariable
 		static const char* ITEM_REGISTER;
 		static const char* ITEM_ANALOG_INPUT;
 		static const std::map<string, short> ITEM_TYPE_SIZES;
+		class AddressException;
 		class TypeException;
 		struct TypeUnions;
 };
@@ -103,6 +104,15 @@ class PlcVariable::TypeException : public std::exception
 		string type;
 	public:
 		TypeException(string type);
+		const char* what();
+};
+
+class PlcVariable::AddressException : public std::exception
+{
+	private:
+		int address;
+	public:
+		AddressException(int address);
 		const char* what();
 };
 
