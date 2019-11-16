@@ -1,5 +1,12 @@
 #include "DataWriter.h"
 
+///
+/// Konstruktor obiektu zapisuj¹cego wartoœci z bazy danych do sterownika
+///
+/// @param	modbus_ctx	wskaŸnik do po³¹czenia MODBUS
+/// @param	db			wskaŸnik do obiektu po³¹czenia z baz¹ danych MySQL
+/// @param	offset		przesuniêcie adresu w sterowniku
+///
 DataWriter::DataWriter(modbus_t* modbus_ctx, mysqlx::Session* db, short offset)
 {
 	this->modbus_ctx = modbus_ctx;
@@ -7,6 +14,11 @@ DataWriter::DataWriter(modbus_t* modbus_ctx, mysqlx::Session* db, short offset)
 	this->offset = offset;
 }
 
+///
+/// Zapis nowych wartoœci do sterownika
+/// Metoda pobiera rekordy z bazy danych MySQL, przetwarza je i zapisuje w sterowniku
+/// za pomoc¹ protoko³u MODBUS.
+///
 void DataWriter::write()
 {
 	mysqlx::SqlResult qResult;	//< Wynik zapytania

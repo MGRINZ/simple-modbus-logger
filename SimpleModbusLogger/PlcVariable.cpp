@@ -18,7 +18,9 @@ const std::map<string, short> PlcVariable::ITEM_TYPE_SIZES = {
 };
 
 ///
-///Sprawdza czy pobierana zmienna jest typu REAL
+/// Sprawdza czy pobierana zmienna jest typu REAL
+///
+/// @return		true - zmienna typu REAL; false - zmienna innego typu
 ///
 bool PlcVariable::isReal()
 {
@@ -26,7 +28,9 @@ bool PlcVariable::isReal()
 }
 
 ///
-///Sprawdza czy pobierana zmienna jest typu LREAL
+/// Sprawdza czy pobierana zmienna jest typu LREAL
+///
+/// @return		true - zmienna typu LREAL; false - zmienna innego typu
 ///
 bool PlcVariable::isLReal()
 {
@@ -34,13 +38,23 @@ bool PlcVariable::isLReal()
 }
 
 ///
-///Sprawdza czy pobierana zmienna jest typu ze znakiem
+/// Sprawdza czy pobierana zmienna jest typu ze znakiem
+///
+/// @return		true - zmienna typu ze znakiem; false - zmienna typu bez znaku
 ///
 bool PlcVariable::isSigned()
 {
 	return type[0] != 'U';
 }
 
+/// 
+/// Konstruktor zmiennej sterownika
+/// 
+/// @param	var		rodzaj zmiennej
+/// @param	address	adres zmiennej
+/// @param	type	typ zmiennej
+/// @param	label	etykieta zmiennej
+/// 
 PlcVariable::PlcVariable(char *var, int address, const char *type, string label)
 {
 	strcpy_s(this->var, sizeof(this->var), var);
@@ -70,26 +84,51 @@ PlcVariable::PlcVariable(char *var, int address, const char *type, string label)
 		throw TypeException(this->type);
 }
 
+///
+/// Pobieranie rodzaju zmiennej
+///
+/// @return		rodzaj zmiennej
+///
 char* PlcVariable::getVar()
 {
 	return var;
 }
 
+///
+/// Pobieranie adresu zmiennej
+///
+/// @return		adres zmiennej
+///
 short PlcVariable::getAddress()
 {
 	return address;
 }
 
+///
+/// Pobieranie typu zmiennej
+///
+/// @return		typ zmiennej
+///
 char* PlcVariable::getType()
 {
 	return this->type;
 }
 
+///
+/// Pobieranie rozmiaru zmiennej
+///
+/// @return		rozmiar zmiennej
+///
 short PlcVariable::getSize()
 {
 	return this->size;
 }
 
+///
+/// Pobieranie etykiety zmiennej
+///
+/// @return		etykieta zmiennej
+///
 string PlcVariable::getLabel()
 {
 	return label;
@@ -99,6 +138,8 @@ string PlcVariable::getLabel()
 /// Ustawienie rzeczywistej wartoœci zmiennej
 /// Metoda pobiera jako argument wartoœæ zmiennej odczytan¹ z bazy danych i przetwarza j¹
 /// do postaci size rejestrów.
+///
+///	@param	value	rzeczywista wartoœæ zmiennej
 ///
 void PlcVariable::setRealValue(double value)
 {
@@ -132,6 +173,8 @@ void PlcVariable::setRealValue(double value)
 /// z których sk³ada siê rzeczywista wartoœæ zmiennej.
 /// Metoda zwraca prawid³owy wskaŸnik tylko po wywo³aniu metody setRealValue()
 ///
+///	@return		tablica wartoœci 16-bitowych rejestrów reprezentuj¹cych wartoœæ zmiennej
+///
 unsigned short* PlcVariable::getValue()
 {
 	return this->value;
@@ -142,27 +185,49 @@ unsigned short* PlcVariable::getValue()
 /// Metoda zwraca wartoœæ przypisan¹ metod¹ setRealValue()
 /// lub wyznaczon¹ z wartoœci rejestrów metod¹ setValue()
 ///
+/// @return		rzeczywista wartoœæ zmiennej
+///
 double PlcVariable::getRealValue()
 {
 	return realValue;
 }
 
+///
+/// Konstruktor wyj¹tku b³êdu typu
+///
+/// @param	type	typ danych przekazany do zmiennej
+///
 PlcVariable::TypeException::TypeException(string type)
 {
 	this->type = type;
 }
 
+///
+/// Pobranie wiadomoœci o b³êdzie typu
+///
+/// @return		wiadomoœæ o b³êdzie
+///
 const char* PlcVariable::TypeException::what()
 {
 	string msg = "Unknown type " + type;
 	return msg.c_str();
 }
 
+///
+/// Konstruktor wyj¹tku b³êdu adresu
+///
+/// @param	address	address przekazany do zmiennej
+///
 PlcVariable::AddressException::AddressException(int address)
 {
 	this->address = address;
 }
 
+///
+/// Pobranie wiadomoœci o b³êdzie adresu
+///
+/// @return		wiadomoœæ o b³êdzie
+///
 const char* PlcVariable::AddressException::what()
 {
 	std::stringstream msg;

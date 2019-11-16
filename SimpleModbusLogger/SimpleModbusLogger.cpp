@@ -8,6 +8,9 @@
 #include "LogData.h"
 #include "LoggerSettings.h"
 
+/// 
+/// Wątek dziennika 
+/// 
 void logging_thread(LoggerSettings *settings)
 {
 	while (true) {

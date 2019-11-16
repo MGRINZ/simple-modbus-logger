@@ -98,6 +98,9 @@ void PlcVariable::setValue(T& value)
 		this->realValue = temp;
 }
 
+//
+// Wyj¹tek zwi¹zany z podaniem nieprawid³owego typu zmiennej
+//
 class PlcVariable::TypeException : public std::exception
 {
 	private:
@@ -107,6 +110,9 @@ class PlcVariable::TypeException : public std::exception
 		const char* what();
 };
 
+//
+// Wyj¹tek zwi¹zany z podaniem nieprawid³owego adresu zmiennej
+//
 class PlcVariable::AddressException : public std::exception
 {
 	private:
@@ -116,6 +122,9 @@ class PlcVariable::AddressException : public std::exception
 		const char* what();
 };
 
+//
+// Struktura do zamiany ci¹gu bitów na liczbê typu double i odwrotnie
+//
 struct PlcVariable::TypeUnions
 {
 	union u_float

@@ -7,6 +7,8 @@ LoggerSettings::LoggerSettings()
 ///
 /// Ustawienie listy zmiennych do odczytu
 ///
+/// @param	logData	obiekt listy zmiennych
+///
 void LoggerSettings::setLogData(LogData* logData)
 {
 	this->logData = logData;
@@ -14,6 +16,8 @@ void LoggerSettings::setLogData(LogData* logData)
 
 ///
 /// Ustawienie obiektu zapisuj¹cego dane do sterownika
+///
+/// @param	dataWriter	obiekt zapisuj¹cy dane
 ///
 void LoggerSettings::setDataWriter(DataWriter* dataWriter)
 {
@@ -23,6 +27,8 @@ void LoggerSettings::setDataWriter(DataWriter* dataWriter)
 ///
 /// Pobranie aktualnej listy zmiennych do odczytu
 ///
+/// @return		obiekt listy zmiennych do odczytu
+///
 LogData* LoggerSettings::getLogData()
 {
 	return logData;
@@ -30,6 +36,8 @@ LogData* LoggerSettings::getLogData()
 
 ///
 /// Pobranie obiektu zapisuj¹cego dane do sterownika
+///
+/// @return		obiekt zapisuj¹cy dane
 ///
 DataWriter* LoggerSettings::getDataWriter()
 {
@@ -39,6 +47,8 @@ DataWriter* LoggerSettings::getDataWriter()
 ///
 /// Ustawienie czasu trwania cyklu
 ///
+/// @param	sweep_time	czas trwania cyklu
+///
 void LoggerSettings::setSweepTime(short sweep_time)
 {
 	this->sweep_time = sweep_time;
@@ -46,6 +56,8 @@ void LoggerSettings::setSweepTime(short sweep_time)
 
 ///
 /// Pobranie aktualnego czasu trwania cyklu
+///
+/// @return		czas trwania cyklu
 ///
 short LoggerSettings::getSweepTime()
 {
@@ -55,6 +67,8 @@ short LoggerSettings::getSweepTime()
 ///
 /// Ustawienie wyœwietlania czasu trwania cyklu w oknie programu
 ///
+/// @param	show_time	stan wyœwietlania czasu trwania cyklu
+///
 void LoggerSettings::showTime(bool show_time)
 {
 	this->show_time = show_time;
@@ -62,6 +76,8 @@ void LoggerSettings::showTime(bool show_time)
 
 ///
 /// Pobieranie stanu flagi wyœwietlania czasu trwania cyklu w oknie programu
+///
+/// @return		stan wyœwietlania czasu trwania cyklu
 ///
 bool LoggerSettings::showTime()
 {
@@ -79,6 +95,8 @@ void LoggerSettings::stop()
 ///
 /// Sprawdza czy zosta³ wys³any sygna³ zatrzymania w¹tku
 ///
+/// @return		wartoœæ sygna³u zatrzymania w¹tku
+///
 bool LoggerSettings::isStopSignalSent()
 {
 	return stop_signal;
@@ -95,6 +113,8 @@ void LoggerSettings::setStopped(bool value)
 ///
 /// Sprawdzenie czy w¹tek zosta³ zatrzymany
 /// po wys³aniu sygna³u zatrzymania
+///
+/// @return		stan zatrzymania w¹tku
 ///
 bool LoggerSettings::isStopped()
 {
@@ -114,6 +134,8 @@ void LoggerSettings::pause()
 ///
 /// Sprawdza czy zosta³ wys³any sygna³ wstrzymania w¹tku
 ///
+/// @return		wartoœæ sygna³u wstrzymania w¹tku
+///
 bool LoggerSettings::isPauseSignalSent()
 {
 	return this->pause_signal;
@@ -121,6 +143,8 @@ bool LoggerSettings::isPauseSignalSent()
 
 ///
 /// Ustawia czy w¹tek zosta³ wstrzymany
+///
+/// @param	value	stan wstrzymania w¹tku
 ///
 void LoggerSettings::setPaused(bool value)
 {
@@ -130,6 +154,8 @@ void LoggerSettings::setPaused(bool value)
 ///
 /// Sprawdzenie czy w¹tek zosta³ wstrzymany po wys³aniu sygna³u wstrzymania
 /// lub wznowiony po wys³aniu sygna³u wznowienia
+///
+/// @return		stan wstrzymania w¹tku
 ///
 bool LoggerSettings::isPaused()
 {
@@ -148,6 +174,8 @@ void LoggerSettings::resume()
 
 ///
 /// Sprawdza czy zosta³ wys³any sygna³ wznowienia w¹tku
+///
+/// @return		wartoœæ sygna³u wznowienia w¹tku
 ///
 bool LoggerSettings::isResumeSignalSent()
 {

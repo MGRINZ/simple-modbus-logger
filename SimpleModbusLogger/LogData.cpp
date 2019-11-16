@@ -1,5 +1,10 @@
 #include "LogData.h"
 
+/// 
+/// Zapis pobranych ze sterownika zmiennych do bazy danych
+///
+/// @params	items	wektor zawieraj¹cy listê zmiennych
+/// 
 void LogData::save(vector<PlcVariable>& items)
 {
 	for (auto item : items)
@@ -22,6 +27,14 @@ void LogData::save(vector<PlcVariable>& items)
 	}
 }
 
+/// 
+/// Konstruktor dziennika wartoœci zmiennych
+///
+/// @param	path		œcie¿ka do pliku zawieraj¹cego listê zmiennych do wczytania
+/// @param	modbus_ctx	wskaŸnik do po³¹czenia MODBUS
+/// @param	db			wskaŸnik do obiektu po³¹czenia z baz¹ danych MySQL
+/// @param	offset		przesuniêcie adresu w sterowniku
+/// 
 LogData::LogData(string path, modbus_t *modbus_ctx, mysqlx::Session *db, short offset)
 {
 	this->path = path;
@@ -30,6 +43,14 @@ LogData::LogData(string path, modbus_t *modbus_ctx, mysqlx::Session *db, short o
 	this->offset = offset;
 }
 
+/// 
+/// Obliczanie indeksu najmniejszego adresu na liœcie zmiennych przeznaczonych do zapisu
+///
+/// @param	items	wektor zawieraj¹cy listê zmiennych
+///	@param	start	pocz¹tkowy indeks
+///	@param	end		koñcowy indeks
+///	@return			indeks najmniejszego adresu na liœcie zmiennych
+/// 
 short LogData::minimum(vector<PlcVariable> &items, int start, int end)
 {
 	short min_index = start;
@@ -42,6 +63,11 @@ short LogData::minimum(vector<PlcVariable> &items, int start, int end)
 	return min_index;
 }
 
+/// 
+/// Sortowanie listy zmiennych przeznaczonych do zapisu
+///
+/// @param	items	wektor zawieraj¹cy listê zmiennych
+/// 
 void LogData::sort(vector<PlcVariable> &items)
 {
 	int items_length = items.size();
@@ -55,6 +81,12 @@ void LogData::sort(vector<PlcVariable> &items)
 	}
 }
 
+/// 
+/// Wczytanie listy zmiennych i optymalizacja przez sortowanie
+/// Metoda wczytuje listê zmiennych z pliku i tworzy listy zmiennych wed³ug ich rodzajów.
+/// Nastêpnie wywo³uje metodê sortowania, aby w ramach pojedynczego zapytania mo¿liwe
+/// by³o pobranie wielu wartoœci zmiennych, co zapewnia krótszy czas dzia³ania programu.
+/// 
 void LogData::optimize()
 {
 	std::ifstream data_file(path);
@@ -130,6 +162,13 @@ void LogData::optimize()
 	sort(analogInputs);
 }
 
+/// 
+/// Wczytanie wartoœci zmiennych i zapis do bazy danych
+/// Metoda wysy³a kolejne zapytania do sterownika o wartoœci wybranych zmiennych.
+/// Na podstawie posortowanych list zmiennych okreœla przedzia³y adresów, które
+/// maj¹ zostaæ odczytane. Nastêpnie przekazuje ka¿d¹ pobran¹ zmienn¹ do zapisu do bazy
+/// danych.
+/// 
 void LogData::log()
 {
 	vector<PlcVariable>* items[4] = {
@@ -154,7 +193,6 @@ void LogData::log()
 
 		for (int j = 1; j < items_length; j++)
 		{
-			//std::cout << item[j - 1].getSize() << std::endl;
 			if (item[j].getAddress() == item[j - 1].getAddress() + item[j - 1].getSize())
 				count += item[j].getSize();
 
@@ -175,8 +213,6 @@ void LogData::log()
 				else if (!strcmp(item[0].getVar(), "AI"))
 					fetchAnalogInput(start, count, item, item_index);
 				
-				//std::cout << "v: " << item[0].getVar() << " i: " << item_index << " s: " << start << " c: " << count << " " << start << "-" << start + count - 1 << std::endl;
-
 				item_index = j;
 				start = item[item_index].getAddress();
 				count = item[item_index].getSize();
@@ -189,6 +225,14 @@ void LogData::log()
 	}
 }
 
+///
+/// Pobranie wartoœci wyjœæ dyskretnych
+/// 
+/// @param	start		pocz¹tkowy adres
+/// @param	count		iloœæ zmiennych
+/// @param	items		wektor zawieraj¹cy listê zmiennych
+/// @param	item_index	indeks w wektorze, w którym znajduje siê pocz¹tkowy adres
+///
 void LogData::fetchOutput(short start, short count, vector<PlcVariable>& items, int item_index)
 {
 	uint8_t* dest = new uint8_t[count];
@@ -200,6 +244,14 @@ void LogData::fetchOutput(short start, short count, vector<PlcVariable>& items, 
 	delete[] dest;
 }
 
+///
+/// Pobranie wartoœci wejœæ dyskretnych
+/// 
+/// @param	start		pocz¹tkowy adres
+/// @param	count		iloœæ zmiennych
+/// @param	items		wektor zawieraj¹cy listê zmiennych
+/// @param	item_index	indeks w wektorze, w którym znajduje siê pocz¹tkowy adres
+///
 void LogData::fetchInput(short start, short count, vector<PlcVariable>& items, int item_index)
 {
 	uint8_t* dest = new uint8_t[count];
@@ -211,6 +263,14 @@ void LogData::fetchInput(short start, short count, vector<PlcVariable>& items, i
 	delete[] dest;
 }
 
+///
+/// Pobranie wartoœci rejestrów
+/// 
+/// @param	start		pocz¹tkowy adres
+/// @param	count		iloœæ zmiennych
+/// @param	items		wektor zawieraj¹cy listê zmiennych
+/// @param	item_index	indeks w wektorze, w którym znajduje siê pocz¹tkowy adres
+///
 void LogData::fetchRegisters(short start, short count, vector<PlcVariable> &items, int item_index)
 {
 	uint16_t *dest = new uint16_t[count];
@@ -229,6 +289,14 @@ void LogData::fetchRegisters(short start, short count, vector<PlcVariable> &item
 	delete[] dest;
 }
 
+///
+/// Pobranie wartoœci wejœæ analogowych
+/// 
+/// @param	start		pocz¹tkowy adres
+/// @param	count		iloœæ zmiennych
+/// @param	items		wektor zawieraj¹cy listê zmiennych
+/// @param	item_index	indeks w wektorze, w którym znajduje siê pocz¹tkowy adres
+///
 void LogData::fetchAnalogInput(short start, short count, vector<PlcVariable>& items, int item_index)
 {
 	uint16_t* dest = new uint16_t[count];

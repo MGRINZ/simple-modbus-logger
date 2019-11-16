@@ -1,11 +1,21 @@
 #include "IniParser.h"
 
+///
+/// Konstruktor parsera plików INI
+///
+/// @param	path	œcie¿ka do pliku ini
+///
 IniParser::IniParser(string path)
 {
 	this->path = path;
-	//sprawdŸ czy istnieje jak nie to utwórz i wype³nij wartoœciami domyœlnymi
 }
 
+///
+/// Pobieranie wartoœci wybranego klucza
+///
+/// @param	key		nazwa klucza
+/// @return			ci¹g znaków z wartoœci¹ skojarzon¹ ze wskazanym kluczem
+///
 string IniParser::get(string key)
 {
 	std::ifstream file(path);
@@ -26,6 +36,12 @@ string IniParser::get(string key)
 	return value;
 }
 
+///
+/// Pobieranie wartoœci wybranego klucza
+///
+/// @param	key		nazwa klucza
+/// @return			ci¹g znaków z wartoœci¹ skojarzon¹ ze wskazanym kluczem
+///
 const char* IniParser::getChar(string key)
 {
 	string value_str = get(key);
@@ -35,6 +51,12 @@ const char* IniParser::getChar(string key)
 	return value;
 }
 
+///
+/// Pobieranie wartoœci wybranego klucza
+///
+/// @param	key		nazwa klucza
+/// @return			liczba z wartoœci¹ skojarzon¹ ze wskazanym kluczem
+///
 int IniParser::getInt(string key)
 {
 	return atoi(get(key).c_str());
