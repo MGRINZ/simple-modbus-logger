@@ -15,14 +15,18 @@ void DataWriter::write()
 
 	//Polecenie usuniêcia
 	mysqlx::SqlStatement dStmt = db->sql(
-		"DELETE FROM writes "
-		"WHERE id = ?"
+		"DELETE FROM writes"
 	);
 	
 	//Zapytanie o wyjœcia
 	mysqlx::SqlStatement qStmt = db->sql(
-		"SELECT id, address, value FROM writes "
-		"WHERE var = 'Q'"
+		"SELECT a.id, address, value, type FROM writes "
+		"JOIN ( "
+		"    SELECT MAX(id) AS id FROM writes "
+		"    WHERE var = 'Q' "
+		"    GROUP BY address "
+		") AS a "
+		"ON writes.id = a.id "
 	);
 	qResult = qStmt.execute();
 
@@ -34,16 +38,18 @@ void DataWriter::write()
 		address -= this->offset;
 		
 		if (!(address < 0 || address > 65535))
-			modbus_write_bit(modbus_ctx, address, (int)value);
-
-		dStmt.bind(row[0]);
-		dResult = dStmt.execute();
+			modbus_write_bit(modbus_ctx, address, (int)value);		
 	}
 
 	//Zapytanie o rejestry
 	qStmt = db->sql(
-		"SELECT id, address, value, type FROM writes "
-		"WHERE var = 'R'"
+		"SELECT a.id, address, value, type FROM writes "
+		"JOIN ( "
+		"    SELECT MAX(id) AS id FROM writes "
+		"    WHERE var = 'R' "
+		"    GROUP BY address "
+		") AS a "
+		"ON writes.id = a.id "
 	);
 	qResult = qStmt.execute();
 
@@ -52,6 +58,7 @@ void DataWriter::write()
 	{
 		int address = row[1];
 		double value = row[2];
+
 		string type = (string) row[3];
 
 		address -= this->offset;
@@ -67,8 +74,7 @@ void DataWriter::write()
 		catch (PlcVariable::AddressException& e) {
 			std::cout << e.what();
 		}
-
-		dStmt.bind(row[0]);
-		dResult = dStmt.execute();
 	}
+
+	dResult = dStmt.execute();
 }
