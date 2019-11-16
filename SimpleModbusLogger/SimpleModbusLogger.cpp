@@ -44,7 +44,9 @@ void logging_thread(LoggerSettings *settings)
 		auto end = std::chrono::system_clock::now();
 		long elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 		
-		std::cout << "T: " << elapsed_time << std::endl;
+		//Wyświetlanie czasu trwania cyklu w oknie programu
+		if(settings->showTime())
+			std::cout << "T: " << elapsed_time << std::endl;
 
 		//Opóźnij rozpoczęcie kolejnego cyklu
 		std::this_thread::sleep_for(std::chrono::milliseconds(settings->getSweepTime() - elapsed_time));
@@ -88,6 +90,9 @@ int main()
 	
 	//Domyślne przesunięcie adresu w sterowniku
 	short offset = 1;
+	
+	//Wyświetlanie czasu trwania cyklu w oknie programu
+	short show_time = 0;
 
 	//Wczytanie ustawień połączenia MODBUS
 	if (!strcmp(connection_type, "serial"))
@@ -170,6 +175,9 @@ int main()
 	//Wczytanie przesunięcia adresu w sterowniku
 	offset = config.getInt("offset");
 
+	//Wczytanie flagi wyświetlania czasu trwania cyklu
+	show_time = config.getInt("show_time");
+
 	//Przygotowanie obiektu zapisującego dane do sterownika 
 	dataWriter = new DataWriter(ctx, db, offset);
 
@@ -182,6 +190,7 @@ int main()
 	loggerSettings->setLogData(logdata);
 	loggerSettings->setDataWriter(dataWriter);
 	loggerSettings->setSweepTime(sweep_time);
+	loggerSettings->showTime(show_time);
 
 	//Utworzenie wątku dziennika
 	std::thread logger(logging_thread, loggerSettings);

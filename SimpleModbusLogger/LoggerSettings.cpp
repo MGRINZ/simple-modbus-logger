@@ -53,6 +53,22 @@ short LoggerSettings::getSweepTime()
 }
 
 ///
+/// Ustawienie wyœwietlania czasu trwania cyklu w oknie programu
+///
+void LoggerSettings::showTime(bool show_time)
+{
+	this->show_time = show_time;
+}
+
+///
+/// Pobieranie stanu flagi wyœwietlania czasu trwania cyklu w oknie programu
+///
+bool LoggerSettings::showTime()
+{
+	return this->show_time;
+}
+
+///
 /// Wys³anie sygna³u zatrzymania w¹tku
 ///
 void LoggerSettings::stop()
